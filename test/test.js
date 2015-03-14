@@ -1,15 +1,15 @@
 var assert = require("assert"),
-    createAtom = require("../src/index");
+    Atom = require("../src/index");
 
 
-describe("createAtom(initial_value : Any)", function() {
-    describe("swap(fn : Function)", function() {
+describe("Atom(initial_value : Any)", function() {
+    describe("#swap(fn : Function)", function() {
         it("should swap atom value calling fn passing current value", function() {
-            var atom = createAtom({
+            var atom = new Atom({
                 key: "key"
             });
 
-            atom.watch(function(atom, prev, next) {
+            atom.watch(function(prev, next) {
                 assert.deepEqual(prev, {
                     key: "key"
                 });
