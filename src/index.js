@@ -1,6 +1,5 @@
-var indexOf = require("index_of"),
-    fastSlice = require("fast_slice"),
-    isFunction = require("is_function");
+var indexOf = require("@nathanfaucett/index_of"),
+    isFunction = require("@nathanfaucett/is_function");
 
 
 var AtomPrototype = Atom.prototype;
@@ -10,68 +9,65 @@ module.exports = Atom;
 
 
 function Atom(value) {
-    this.__watchers = [];
-    this.__value = value;
+    if (!(this instanceof Atom)) {
+        throw new TypeError("Atom(value) must be called with new (i.e. new Atom(value))");
+    }
+    this._listeners = [];
+    this._value = value;
 }
 
-AtomPrototype.watch = function(callback) {
-    var watchers, index;
+AtomPrototype.get = function get() {
+    return this._value;
+};
+
+AtomPrototype.set = function set(next) {
+    var prev = this._value;
+    this._value = next;
+    return Atom_emit(this, prev, next);
+};
+
+AtomPrototype.addListener = function addListener(callback) {
+    var listeners, index;
 
     if (!isFunction(callback)) {
-        throw new TypeError("watch(callback) callback must be a function");
+        throw new TypeError("addListener(callback) callback must be a function");
     }
 
-    watchers = this.__watchers;
-    index = indexOf(watchers, callback);
+    listeners = this._listeners;
+    index = indexOf(listeners, callback);
 
     if (index === -1) {
-        watchers[watchers.length] = callback;
+        listeners[listeners.length] = callback;
     }
 
     return this;
 };
 
-AtomPrototype.removeWatch = function(callback) {
-    var watchers = this.__watchers,
-        index = indexOf(watchers, callback);
+AtomPrototype.removeListener = function removeListener(callback) {
+    var listeners = this._listeners,
+        index = indexOf(listeners, callback);
 
     if (index !== -1) {
-        watchers.splice(index, 1);
+        listeners.splice(index, 1);
     }
 
     return this;
 };
 
-AtomPrototype.swap = function(fn) {
+AtomPrototype.update = function update(fn) {
     if (!isFunction(fn)) {
-        throw new TypeError("swap(fn) fn must be a function");
+        throw new TypeError("update(fn) fn must be a function");
     } else {
-        Atom_swap(this, fn.apply(null, [this.__value].concat(fastSlice(arguments, 1))));
+        return this.set(fn(this._value));
     }
-    return this;
 };
-
-AtomPrototype.set = function(value) {
-    Atom_swap(this, value);
-    return this;
-};
-
-AtomPrototype.deref = function() {
-    return this.__value;
-};
-
-function Atom_swap(_this, next) {
-    var prev = _this.__value;
-    _this.__value = next;
-    Atom_emit(_this, prev, next);
-}
 
 function Atom_emit(_this, prev, next) {
-    var watchers = _this.__watchers,
+    var listeners = _this._listeners,
         i = -1,
-        il = watchers.length - 1;
+        il = listeners.length - 1;
 
     while (i++ < il) {
-        watchers[i](prev, next);
+        listeners[i](prev, next);
     }
 }
