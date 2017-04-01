@@ -30,8 +30,6 @@
     "zuul": "^3.11.1"
   },
   "dependencies": {
-    "@nathanfaucett/apply": "^0.0.1",
-    "@nathanfaucett/fast_slice": "^0.0.1",
     "@nathanfaucett/index_of": "^0.0.1",
     "@nathanfaucett/is_function": "^0.0.1"
   }
