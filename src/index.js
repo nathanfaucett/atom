@@ -13,6 +13,9 @@ function Atom(value) {
         throw new TypeError("Atom(value) must be called with new (i.e. new Atom(value))");
     }
     this._listeners = [];
+    this._addListeners = [];
+    this._removeListeners = [];
+    this._isEmitting = false;
     this._value = value;
 }
 
@@ -33,22 +36,32 @@ AtomPrototype.addListener = function addListener(callback) {
         throw new TypeError("addListener(callback) callback must be a function");
     }
 
-    listeners = this._listeners;
-    index = indexOf(listeners, callback);
+    if (this._isEmitting) {
+        this._addListeners.push(callback);
+    } else {
+        listeners = this._listeners;
+        index = indexOf(listeners, callback);
 
-    if (index === -1) {
-        listeners[listeners.length] = callback;
+        if (index === -1) {
+            listeners.push(callback);
+        }
     }
 
     return this;
 };
 
 AtomPrototype.removeListener = function removeListener(callback) {
-    var listeners = this._listeners,
+    var listeners, index;
+
+    if (this._isEmitting) {
+        this._removeListeners.push(callback);
+    } else {
+        listeners = this._listeners;
         index = indexOf(listeners, callback);
 
-    if (index !== -1) {
-        listeners.splice(index, 1);
+        if (index !== -1) {
+            listeners.splice(index, 1);
+        }
     }
 
     return this;
@@ -62,12 +75,55 @@ AtomPrototype.update = function update(fn) {
     }
 };
 
+function Atom_addListeners(_this) {
+    var listeners = _this._listeners,
+        addListeners = _this._addListeners,
+        i = -1,
+        il = addListeners.length - 1,
+        callback;
+
+    while (i++ < il) {
+        callback = addListeners[i];
+        index = indexOf(listeners, callback);
+
+        if (index === -1) {
+            listeners.push(callback);
+        }
+    }
+
+    addListeners.length = 0;
+}
+
+function Atom_removeListeners(_this) {
+    var listeners = _this._listeners,
+        removeListeners = _this._removeListeners,
+        i = -1,
+        il = removeListeners.length - 1;
+
+    while (i++ < il) {
+        index = indexOf(listeners, removeListeners[i]);
+
+        if (index === -1) {
+            listeners.splice(index, 1);
+        }
+    }
+
+    removeListeners.length = 0;
+}
+
 function Atom_emit(_this, prev, next) {
     var listeners = _this._listeners,
         i = -1,
         il = listeners.length - 1;
 
+    _this._isEmitting = true;
+
     while (i++ < il) {
         listeners[i](prev, next);
     }
+
+    Atom_addListeners(_this);
+    Atom_removeListeners(_this);
+
+    _this._isEmitting = false;
 }

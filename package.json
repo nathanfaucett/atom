@@ -1,6 +1,6 @@
 {
   "name": "@nathanfaucett/atom",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "clojure like atom for the browser and node.js",
   "repository": {
     "type": "git",
